@@ -46,7 +46,6 @@ def find():
     cur.execute("select * from subs")
     for d in cur.fetchall():        
         print d[0]
-        print d[3]
         total=tosqlite.add(d[3],d[0])
         if (total):
             print "total:"+str(total)
