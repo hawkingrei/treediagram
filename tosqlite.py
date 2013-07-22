@@ -13,12 +13,12 @@ import socket
 #print urllib2.urlopen(request).read()
 #f = feedparser.parse('http://cnbeta.feedsportal.com/c/34306/f/624776/index.rss')
 #f = feedparser.parse('http://blog.csdn.net/rss.html?type=Home&channel=')
-def isextist(title,link,description,publisher):
+def isextist(link,publisher):
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     text=text+"/db/reader.db"
     con = sqlite3.connect(text)
     cur = con.cursor()
-    cur.execute("select * from reader where title=(?) and link=(?) and publisherid=(?)",(title,link,publisher))
+    cur.execute("select * from reader where link=(?) and publisherid=(?)",(link,publisher))
     if (len(cur.fetchall())==0):
         cur.close()
         con.close()
@@ -30,14 +30,11 @@ def isextist(title,link,description,publisher):
     
 def add(http,publisherid):
     total=0
-    timeout = 20    
-    socket.setdefaulttimeout(timeout)
     try:
         request = urllib2.Request(http)
         request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0')
-        print "head"
-        fp= feedparser.parse(http)
-        print "fp"
+        readhttp=urllib2.urlopen(request,timeout=10).read()
+        fp= feedparser.parse(readhttp)
     except:
         return 0
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
@@ -45,7 +42,6 @@ def add(http,publisherid):
     con = sqlite3.connect(text)
     con.text_factory=str
     cur = con.cursor()
-    print u"链接数据库"
     try:
         cur.execute('CREATE TABLE reader(id integer primary key autoincrement,title,link,description,time,publisherid)')
         
@@ -64,7 +60,7 @@ def add(http,publisherid):
                         description=''
                 t=time.strftime('%Y-%m-%d %H:%M',time.localtime(time.time()))
                 
-                if (isextist(title,link,description,publisherid)) :
+                if (isextist(link,publisherid)) :
                     con.execute('insert into reader(title,link,description,time,publisherid) values(?,?,?,?,?)',(title,link,description,t,publisherid))
                     print entry.title
                     total=total+1
