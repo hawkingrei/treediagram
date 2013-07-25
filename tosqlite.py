@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*- 
-import feedparser
+import speedparser
 import os
 import sys
 import sqlite3
@@ -34,39 +34,40 @@ def add(http,publisherid):
         request = urllib2.Request(http)
         request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0')
         readhttp=urllib2.urlopen(request,timeout=10).read()
-        fp= feedparser.parse(readhttp)
+        
     except:
         return 0
+    fp= speedparser.parse(readhttp,clean_html=False)
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     text=text+"/db/reader.db"
     con = sqlite3.connect(text)
     con.text_factory=str
     cur = con.cursor()
     try:
-        cur.execute('CREATE TABLE reader(id integer primary key autoincrement,title,link,description,time,publisherid)')
+        cur.execute('CREATE TABLE reader(id integer primary key autoincrement,title,link,description,content,time,publisherid)')
         
     except:
         {}
     for entry in fp.entries:
-            try:
+                timedata=entry.date_parsed
+                t=time.strftime("%Y-%m-%d %X",timedata)
                 title=entry.title
                 link=entry.link
                 try:
                     description=entry.description
                 except:
-                    try:
-                        description=entry.content
-                    except:
-                        description=''
-                t=time.strftime('%Y-%m-%d %H:%M',time.localtime(time.time()))
+                    description=''
+                try:
+                    content=entry.content[0]['value']
+                except:
+                    content=''
                 
                 if (isextist(link,publisherid)) :
-                    con.execute('insert into reader(title,link,description,time,publisherid) values(?,?,?,?,?)',(title,link,description,t,publisherid))
+                    con.execute('insert into reader(title,link,description,content,time,publisherid) values(?,?,?,?,?,?)',(title,link,description,content,t,publisherid))
                     print entry.title
                     total=total+1
                     con.commit()
-            except:
-                0
+            
 
     cur.close()
     con.close()
@@ -76,7 +77,7 @@ def compact_sqlite3_db():
     try:
         text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
         text=text+"/db/reader.db"
-        conN = sqlite3.connect(text)
+        conn = sqlite3.connect(text)
         conn.execute("VACUUM")
         conn.close()
         return True
