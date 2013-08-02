@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*- 
-import speedparser
+import feedparser
 import os
 import sys
 import sqlite3
@@ -8,7 +8,7 @@ import urllib2
 import time
 import socket
 import speedparser
-import cchardet as chardet
+import chardet 
 #request = urllib2.Request("http://blog.csdn.net/rss.html?type=Home&channel=")
 #request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20130619 Firefox/24.0')
 #print urllib2.urlopen(request).read()
@@ -30,43 +30,45 @@ def isextist(link,publisher):
         return 0
     
 def add(http,publisherid):
-
     total=0
     try:
         request = urllib2.Request(http)
-    print 'ok'
+        print 'ok'
         request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0')
         readhttp=urllib2.urlopen(request,timeout=10).read()
-	print ' ok!'
     except:
         return 0
+    
     chard=chardet.detect(readhttp)
-    print '  ok!!'
     if (chard['encoding']=='GB2312'):
-	readhttp.decode('gb2312').encode('UTF-8')
-    print '     OK'
-    fp= speedparser.parse(readhttp, clean_html=False)
-    print '     OK'
+        fp= feedparser.parse(readhttp)
+        print 'by feedparser'
+    else:
+        fp= speedparser.parse(readhttp,clean_html=False)
+        print 'by speedparser'
+    #print '     OK'
+    
+    #print '     OK'
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     text=text+"/db/reader.db"
     con = sqlite3.connect(text)
     con.text_factory=str
     cur = con.cursor()
     try:
-        cur.execute('CREATE TABLE reader(id integer primary key autoincrement,title,link,description,content,time,publisherid)')
-        
+        cur.execute('CREATE TABLE reader(id integer primary key autoincrement,title,link,description,content,time,publisherid)')        
     except:
-        {}
+            {}
     index=0
+    #print fp.entries
     for entry in fp.entries:
-		try:
-			t=entry.published
-		except:	
-			try:	
-				t=entry.updated
-			except:
-				t=time.strftime('%Y-%m-%d %X',time.localtime(time.time()))
-				print  "error"
+                try:
+                    t=entry.published
+                except:	
+                    try:	
+                        t=entry.updated
+                    except:
+                        t=time.strftime('%Y-%m-%d %X',time.localtime(time.time()))
+                        print  "error"
                 title=entry.title
                 link=entry.link
                 try:
@@ -100,4 +102,3 @@ def compact_sqlite3_db():
         return True
     except:
         return False
-    
