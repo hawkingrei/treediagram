@@ -7,12 +7,13 @@ import sqlite3
 import urllib2
 import time
 import socket
-
+import speedparser
+import cchardet as chardet
 #request = urllib2.Request("http://blog.csdn.net/rss.html?type=Home&channel=")
 #request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20130619 Firefox/24.0')
 #print urllib2.urlopen(request).read()
-#f = feedparser.parse('http://cnbeta.feedsportal.com/c/34306/f/624776/index.rss')
-#f = feedparser.parse('http://blog.csdn.net/rss.html?type=Home&channel=')
+#f = speedparser.parse('http://cnbeta.feedsportal.com/c/34306/f/624776/index.rss')
+#f = speedparser.parse('http://blog.csdn.net/rss.html?type=Home&channel=')
 def isextist(link,publisher):
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     text=text+"/db/reader.db"
@@ -29,15 +30,23 @@ def isextist(link,publisher):
         return 0
     
 def add(http,publisherid):
+
     total=0
     try:
         request = urllib2.Request(http)
+    print 'ok'
         request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0')
         readhttp=urllib2.urlopen(request,timeout=10).read()
-        
+	print ' ok!'
     except:
         return 0
-    fp= speedparser.parse(readhttp,clean_html=False)
+    chard=chardet.detect(readhttp)
+    print '  ok!!'
+    if (chard['encoding']=='GB2312'):
+	readhttp.decode('gb2312').encode('UTF-8')
+    print '     OK'
+    fp= speedparser.parse(readhttp, clean_html=False)
+    print '     OK'
     text=os.path.split( os.path.realpath( sys.argv[0] ) )[0]
     text=text+"/db/reader.db"
     con = sqlite3.connect(text)
@@ -48,9 +57,16 @@ def add(http,publisherid):
         
     except:
         {}
+    index=0
     for entry in fp.entries:
-                timedata=entry.date_parsed
-                t=time.strftime("%Y-%m-%d %X",timedata)
+		try:
+			t=entry.published
+		except:	
+			try:	
+				t=entry.updated
+			except:
+				t=time.strftime('%Y-%m-%d %X',time.localtime(time.time()))
+				print  "error"
                 title=entry.title
                 link=entry.link
                 try:
@@ -67,6 +83,7 @@ def add(http,publisherid):
                     print entry.title
                     total=total+1
                     con.commit()
+                index=index+1
             
 
     cur.close()
