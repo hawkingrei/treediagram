@@ -6,6 +6,8 @@ import os
 import xml.dom.minidom as minidom
 import tosqlite
 import time
+#性能测试
+import profile
 
 
 def add(): 
@@ -52,19 +54,14 @@ def find():
             ttotal=ttotal+total
     return ttotal
 
-
 ttotal=0
-for a in range(12*23):
-    total=0
-    total=total+find()
-    ttotal=ttotal+total
-    print "total     :"+str(total)
-    print "ttotal                   :"+str(ttotal)
-    time.sleep(5*60)
-    if (a%3==0):
-        tosqlite.compact_sqlite3_db()
-    if (a==1):
-        tosqlite.compact_sqlite3_db()
+while (1):
+	total=0
+	total=total+find()
+	ttotal=ttotal+total
+	print "total        :"+str(total)
+	print "t:             "+str(ttotal)
+	time.sleep(300)
     
     
         

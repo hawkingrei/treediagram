@@ -8,7 +8,7 @@ import urllib2
 import time
 import socket
 import speedparser
-import chardet 
+import cchardet as chardet
 #request = urllib2.Request("http://blog.csdn.net/rss.html?type=Home&channel=")
 #request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20130619 Firefox/24.0')
 #print urllib2.urlopen(request).read()
@@ -40,7 +40,7 @@ def add(http,publisherid):
         return 0
     
     chard=chardet.detect(readhttp)
-    if (chard['encoding']=='GB2312'):
+    if (chard['encoding']== u'GB18030'):
         fp= feedparser.parse(readhttp)
         print 'by feedparser'
     else:
